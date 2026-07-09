@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zwitserland 2026 — Onze week op reis</title>
+<meta name="theme-color" content="#17212B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Zwitserland 2026">
+<link id="pwa-manifest" rel="manifest" href="">
+<link id="pwa-icon" rel="icon" href="">
+<link id="pwa-apple-icon" rel="apple-touch-icon" href="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --snow:#FBFAF7;
+  --ink:#17212B;
+  --red:#DA291C;
+  --lake:#3B7B9E;
+  --pine:#2F5741;
+  --stone:#6B7078;
+  --line:#E6E2DA;
+  --paper:#FFFFFF;
+  --sand:#F1EDE4;
+  --shadow:0 1px 2px rgba(23,33,43,.05),0 8px 24px rgba(23,33,43,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ---------- wachtwoordscherm ---------- */
+#gate{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px}
+.gate-card{max-width:380px;width:100%;text-align:center;color:#fff}
+.gate-cross{width:40px;height:40px;background:var(--red);border-radius:9px;margin:0 auto 26px;position:relative}
+.gate-cross::before,.gate-cross::after{content:"";position:absolute;background:#fff;border-radius:2px}
+.gate-cross::before{width:18px;height:5px;top:17.5px;left:11px}
+.gate-cross::after{width:5px;height:18px;top:11px;left:17.5px}
+.gate-eyebrow{font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:#8B9298;margin-bottom:14px}
+.gate-title{font-family:"Archivo",sans-serif;font-weight:900;font-size:2.3rem;letter-spacing:-.02em;margin-bottom:10px}
+.gate-sub{color:#A9AEB2;font-size:.95rem;margin-bottom:30px;line-height:1.5}
+#gate-form{display:flex;gap:8px}
+#gate-input{flex:1;background:#1e2a34;border:1px solid #2b3843;border-radius:8px;padding:12px 14px;color:#fff;font-family:"IBM Plex Sans",sans-serif;font-size:.95rem;min-width:0}
+#gate-input::placeholder{color:#5a636b}
+#gate-input:focus{outline:2px solid var(--red);outline-offset:2px}
+#gate-form button{background:var(--red);color:#fff;border:none;border-radius:8px;padding:0 20px;font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:.9rem;cursor:pointer;transition:filter .2s}
+#gate-form button:hover{filter:brightness(1.1)}
+.gate-err{color:#ff8b7d;font-family:"IBM Plex Mono",monospace;font-size:.78rem;margin-top:16px;min-height:16px}
+html{scroll-behavior:smooth}
+body{
+  background:var(--snow);
+  color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:17px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+
+/* ---------- type helpers ---------- */
+.display{font-family:"Archivo",sans-serif;font-weight:900;letter-spacing:-.02em;line-height:.98}
+.mono{font-family:"IBM Plex Mono",monospace}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--stone)}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+section{padding:96px 0}
+.sec-head{margin-bottom:48px;max-width:760px}
+.sec-head .display{font-size:clamp(2rem,5vw,3.2rem);margin:12px 0 14px}
+.sec-head p{color:var(--stone);font-size:1.05rem;max-width:64ch}
+.tick{display:inline-block;width:34px;height:3px;background:var(--red);vertical-align:middle}
+
+/* ---------- zijbalk navigatie ---------- */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:220px;background:var(--paper);border-right:1px solid var(--line);z-index:50;display:flex;flex-direction:column;padding:28px 22px}
+.sidebar .brand{font-family:"Archivo",sans-serif;font-weight:800;font-size:.92rem;letter-spacing:-.01em;display:flex;align-items:center;gap:9px;margin-bottom:36px}
+.sidebar .brand .cross{width:18px;height:18px;background:var(--red);position:relative;flex:none;border-radius:3px}
+.sidebar .brand .cross::before,.sidebar .brand .cross::after{content:"";position:absolute;background:#fff;border-radius:1px}
+.sidebar .brand .cross::before{width:8px;height:2.4px;top:7.8px;left:5px}
+.sidebar .brand .cross::after{width:2.4px;height:8px;top:5px;left:7.8px}
+.sidenav{display:flex;flex-direction:column;gap:3px}
+.sidenav a{color:var(--stone);text-decoration:none;font-family:"IBM Plex Mono",monospace;font-size:.8rem;letter-spacing:.03em;padding:9px 10px;border-radius:8px;transition:all .15s;position:relative}
+.sidenav a:hover{background:var(--sand);color:var(--ink)}
+.sidenav a.active{background:var(--ink);color:#fff}
+.sidebar-foot{margin-top:auto;font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--stone);letter-spacing:.04em;padding:10px}
+.page{margin-left:220px}
+@media(max-width:900px){
+  .sidebar{position:sticky;top:0;left:auto;bottom:auto;width:auto;height:60px;flex-direction:row;align-items:center;padding:0 20px;border-right:none;border-bottom:1px solid var(--line);background:rgba(251,250,247,.9);backdrop-filter:blur(10px)}
+  .sidebar .brand{margin-bottom:0}
+  .sidenav{flex-direction:row;gap:2px;overflow-x:auto;margin-left:auto}
+  .sidenav a{white-space:nowrap;font-size:.72rem;padding:7px 9px}
+  .sidebar-foot{display:none}
+  .page{margin-left:0}
+}
+
+/* ---------- hero ---------- */
+.hero{position:relative;overflow:hidden;padding:72px 0 0;border-bottom:1px solid var(--line)}
+.hero-inner{position:relative;z-index:2}
+.hero .eyebrow{margin-bottom:18px}
+.hero h1{font-size:clamp(3rem,11vw,7.2rem)}
+.hero h1 .amp{color:var(--red);font-weight:700}
+.hero-sub{display:flex;flex-wrap:wrap;gap:14px 34px;align-items:baseline;margin:26px 0 40px}
+.hero-sub .place{font-family:"IBM Plex Mono",monospace;font-size:.86rem;letter-spacing:.04em;color:var(--stone)}
+.hero-sub .place b{color:var(--ink);font-weight:600}
+.count{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-end;margin-bottom:56px}
+.count .big{font-family:"Archivo",sans-serif;font-weight:900;font-size:clamp(2.4rem,7vw,4rem);line-height:.9;color:var(--red)}
+.count .lab{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--stone);text-transform:uppercase;letter-spacing:.14em;padding-bottom:6px}
+.datectl{display:inline-flex;align-items:center;gap:10px;font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--stone)}
+.datectl button{font-family:inherit;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;background:none;border:1px solid var(--line);color:var(--stone);padding:5px 10px;border-radius:20px;cursor:pointer;transition:all .2s}
+.datectl button:hover{border-color:var(--ink);color:var(--ink)}
+.datectl input{font-family:inherit;font-size:.8rem;padding:4px 8px;border:1px solid var(--line);border-radius:6px;color:var(--ink)}
+.range{position:absolute;left:0;right:0;bottom:0;width:100%;height:auto;z-index:1;display:block}
+@media(max-width:760px){.range{opacity:.5}}
+
+/* ---------- planner (editable days) ---------- */
+.daybar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:36px}
+.daytab{font-family:"IBM Plex Mono",monospace;font-size:.78rem;letter-spacing:.04em;background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:8px 15px;cursor:pointer;transition:all .15s;color:var(--stone);display:inline-flex;align-items:center;gap:6px;max-width:220px}
+.daytab .dtab-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px}
+.daytab:hover{border-color:var(--ink);color:var(--ink)}
+.daytab.active{background:var(--ink);border-color:var(--ink);color:#fff}
+.daytab .cnt{opacity:.6;margin-left:4px}
+.addday{font-family:"IBM Plex Mono",monospace;font-size:.78rem;background:none;border:1px dashed var(--stone);border-radius:20px;padding:8px 15px;cursor:pointer;color:var(--stone);transition:all .15s}
+.addday:hover{border-color:var(--red);color:var(--red);border-style:solid}
+
+.daycard{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:28px 28px 24px;box-shadow:var(--shadow)}
+.daycard-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:22px;flex-wrap:wrap}
+.daycard-head .titles{flex:1;min-width:220px}
+.dnum{font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin-bottom:4px}
+.dnum-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.dnum-row .dnum{margin-bottom:0}
+.day-prev,.day-next{font-family:"IBM Plex Mono",monospace;font-size:.8rem;background:var(--sand);border:1px solid var(--line);color:var(--ink);width:26px;height:26px;border-radius:50%;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;flex:none;padding:0}
+.day-prev:hover,.day-next:hover{border-color:var(--red);color:var(--red)}
+.day-prev:disabled,.day-next:disabled{opacity:.3;cursor:default;border-color:var(--line);color:var(--stone)}
+.dtitle-input{font-family:"Archivo",sans-serif;font-weight:800;font-size:1.6rem;letter-spacing:-.01em;border:none;background:none;color:var(--ink);width:100%;padding:2px 0;border-bottom:2px solid transparent;transition:border-color .15s}
+.dtitle-input:hover,.dtitle-input:focus{border-color:var(--line);outline:none}
+.dloc-input{font-family:"IBM Plex Mono",monospace;font-size:.82rem;color:var(--lake);border:none;background:none;width:100%;padding:3px 0;border-bottom:1px dashed transparent}
+.dloc-input:hover,.dloc-input:focus{border-color:var(--line);outline:none}
+.dloc-input::placeholder{color:var(--stone)}
+.daytools{display:flex;gap:6px;flex:none}
+.daytools button{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.05em;background:var(--sand);border:1px solid var(--line);color:var(--stone);padding:6px 11px;border-radius:20px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.daytools button:hover{border-color:var(--ink);color:var(--ink)}
+.daytools .del-day:hover{border-color:var(--red);color:var(--red)}
+
+ul.plan-items{list-style:none}
+.plan-item{display:grid;grid-template-columns:22px 1fr auto;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line);border-radius:8px;cursor:grab;background:var(--paper)}
+.plan-item:last-child{border-bottom:none}
+.plan-item.drag{opacity:.4}
+.plan-item.over{border-top:2px solid var(--red)}
+.plan-item .handle{color:var(--line);font-size:1rem;text-align:center;user-select:none}
+.plan-item .txt{border:none;background:none;font-family:"IBM Plex Sans",sans-serif;font-size:.98rem;color:var(--ink);width:100%;padding:4px 0}
+.plan-item .txt:focus{outline:none;border-bottom:1px solid var(--line)}
+.plan-item.done .txt{color:var(--snow);text-decoration:line-through}
+.plan-item .pctrls{display:flex;gap:2px;align-items:center}
+.plan-item .pctrls button,.plan-item .pctrls input[type=checkbox]{background:none;border:none;color:var(--stone);cursor:pointer;font-size:.95rem;line-height:1;padding:4px 6px;border-radius:6px;transition:all .15s}
+.plan-item .pctrls input[type=checkbox]{appearance:none;width:19px;height:19px;border:2px solid var(--line);border-radius:6px;position:relative;padding:0}
+.plan-item .pctrls input[type=checkbox]:checked{background:var(--pine);border-color:var(--pine)}
+.plan-item .pctrls input[type=checkbox]:checked::after{content:"";position:absolute;left:5px;top:1px;width:4px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.plan-item .pctrls button:hover{background:var(--sand);color:var(--ink)}
+.plan-item .pctrls .rm:hover{color:var(--red)}
+.plan-addrow{display:flex;gap:8px;margin-top:16px}
+.plan-addrow input[type=text]{flex:1;background:var(--snow);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font-family:inherit;font-size:.9rem}
+.plan-addrow button{background:var(--red);color:#fff;border:none;border-radius:8px;padding:0 16px;font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:.86rem;cursor:pointer;min-height:40px}
+.plan-empty{color:var(--stone);font-size:.9rem;padding:8px 4px 4px}
+.plan-hint{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--stone);margin-top:18px}
+.daynote-wrap{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.daynote-lab{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--stone);margin-bottom:8px}
+textarea.daynote{width:100%;min-height:76px;background:var(--snow);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font-family:"IBM Plex Sans",sans-serif;font-size:.9rem;line-height:1.5;resize:vertical}
+
+/* ---------- place blocks (Luzern/Glarus inspiration cards) ---------- */
+.place-block{border-top:3px solid var(--ink);padding-top:28px}
+.place-block.luzern{border-color:var(--lake)}
+.place-block.glarus{border-color:var(--pine)}
+.place-block .kicker{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+.place-block h2{font-family:"Archivo",sans-serif;font-weight:900;font-size:clamp(2rem,6vw,3rem);letter-spacing:-.02em}
+.place-block .nights{font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--stone);letter-spacing:.08em}
+.place-block .lede{color:var(--stone);max-width:62ch;margin-bottom:34px;font-size:1.02rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.card{background:var(--paper);padding:22px 20px 24px;display:flex;flex-direction:column}
+.card .n{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--stone);letter-spacing:.1em}
+.card h4{font-family:"Archivo",sans-serif;font-weight:700;font-size:1.08rem;margin:10px 0 6px;letter-spacing:-.01em}
+.card p{font-size:.9rem;color:var(--stone);line-height:1.5;flex:1}
+.card .addbtn{align-self:flex-start;margin-top:14px;font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.06em;background:none;border:1px solid var(--line);color:var(--ink);padding:6px 11px;border-radius:20px;cursor:pointer;transition:all .15s}
+.card .addbtn:hover{border-color:var(--red);color:var(--red)}
+.luzern .card .n{color:var(--lake)}
+.glarus .card .n{color:var(--pine)}
+
+/* ---------- practical ---------- */
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.fact{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px 20px 22px;box-shadow:var(--shadow)}
+.fact .ic{font-size:1.5rem;line-height:1;margin-bottom:12px}
+.fact h4{font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--stone);margin-bottom:8px}
+.fact p{font-size:.95rem}
+.fact p b{font-weight:600}
+.fact .em{color:var(--red);font-weight:600}
+
+/* ---------- weer ---------- */
+.wxrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:28px}
+.wxcard{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px 20px 20px;box-shadow:var(--shadow)}
+.wxhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px}
+.wxhead h4{font-family:"Archivo",sans-serif;font-weight:800;font-size:1.05rem}
+.wxnow{font-size:.86rem;color:var(--stone)}
+.wxnow b{color:var(--ink);font-size:1.1rem;font-weight:700}
+.wxdays{display:flex;gap:10px}
+.wxday{flex:1;text-align:center;background:var(--sand);border-radius:10px;padding:10px 6px}
+.wxday .d{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);margin-bottom:4px}
+.wxday .ic{font-size:1.3rem;line-height:1;margin-bottom:4px}
+.wxday .t{font-family:"IBM Plex Mono",monospace;font-size:.76rem;color:var(--ink)}
+.wxday .t .lo{color:var(--stone)}
+.wxhint{color:var(--stone);margin-top:14px;font-size:.72rem}
+
+/* ---------- kaart ---------- */
+.maprow{display:grid;grid-template-columns:1.35fr .65fr;gap:22px;align-items:start}
+@media(max-width:860px){.maprow{grid-template-columns:1fr}}
+.mapwrap{position:relative}
+#map{height:480px;width:100%;border-radius:14px;border:1px solid var(--line);box-shadow:var(--shadow);background:#e8eef1;z-index:1}
+@media(max-width:860px){#map{height:340px}}
+.maphint{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--stone);margin-top:10px;min-height:15px}
+.leaflet-container{font-family:"IBM Plex Sans",sans-serif}
+.pin{background:var(--red);color:#fff;width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(23,33,43,.3);border:2px solid #fff}
+.pin span{transform:rotate(45deg);font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:.8rem}
+
+.stopside{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.stops-title{font-family:"Archivo",sans-serif;font-weight:800;font-size:1.15rem}
+.routebtn{font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.06em;text-decoration:none;background:var(--ink);color:#fff;padding:8px 12px;border-radius:20px;white-space:nowrap;transition:filter .2s;display:inline-block}
+.routebtn:hover{filter:brightness(1.15)}
+.routebtn.off{background:var(--line);color:var(--stone);pointer-events:none}
+ol.stops{list-style:none;counter-reset:s}
+.stop-row{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+.stop-row:last-child{border-bottom:none}
+.stop-row .num{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:.82rem;color:var(--red);text-align:center}
+.stop-row .body{min-width:0}
+.stop-row .nm{font-size:.92rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stop-row .gm{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--lake);text-decoration:none}
+.stop-row .gm:hover{text-decoration:underline}
+.stop-row .gm.miss{color:var(--stone)}
+.stop-row .src{font-family:"IBM Plex Mono",monospace;font-size:.66rem;color:var(--stone);opacity:.75}
+.stops-empty{color:var(--stone);font-size:.9rem;padding:14px 0}
+.stop-connector{display:flex;align-items:center;gap:8px;padding:4px 0 4px 24px;font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--stone)}
+.stop-connector .ln{flex:none;width:1px;height:14px;background:var(--line);margin-left:11px}
+.stop-connector span.txt{white-space:nowrap}
+
+/* ---------- interactive shared (packing/todo/notes) ---------- */
+.tools{background:var(--ink);color:#EDEBE4}
+.tools .sec-head .display{color:#fff}
+.tools .sec-head p{color:#A9AEB2}
+.tools .eyebrow{color:#8B9298}
+.tools .tick{background:var(--red)}
+.sync{display:inline-flex;align-items:center;gap:9px;font-family:"IBM Plex Mono",monospace;font-size:.74rem;letter-spacing:.06em;padding:7px 13px;border-radius:30px;border:1px solid #313d47;background:#1d2831;color:#C9CDD1;margin-top:20px}
+.sync .dot{width:8px;height:8px;border-radius:50%;background:var(--stone);flex:none}
+.sync.live .dot{background:#3ecf6d;box-shadow:0 0 0 3px rgba(62,207,109,.18)}
+.sync a{color:#8fd4a6;text-decoration:underline;text-underline-offset:2px}
+.backup-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:20px}
+.backup-btn{font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.05em;background:#1d2831;border:1px solid #313d47;color:#C9CDD1;padding:8px 14px;border-radius:20px;cursor:pointer;transition:all .15s}
+.backup-btn:hover{border-color:#8fd4a6;color:#8fd4a6}
+.backup-hint{font-size:.72rem;color:#7f868c}
+
+.panels{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;margin-top:8px}
+@media(max-width:860px){.panels{grid-template-columns:1fr}}
+.panel{background:#1e2a34;border:1px solid #2b3843;border-radius:14px;padding:22px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.panel-head h3{font-family:"Archivo",sans-serif;font-weight:800;font-size:1.15rem;color:#fff}
+.progress{font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:#9aa1a7}
+.bar{height:5px;background:#2b3843;border-radius:4px;overflow:hidden;margin:14px 0 20px}
+.bar span{display:block;height:100%;background:var(--red);width:0;transition:width .35s ease}
+.bar.pine span{background:#3ecf6d}
+
+.catlabel{font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:#7f868c;margin:18px 0 8px}
+.catlabel:first-of-type{margin-top:0}
+ul.list{list-style:none}
+.item{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #26333d}
+.item:last-child{border-bottom:none}
+.item input[type=checkbox]{appearance:none;width:20px;height:20px;border:2px solid #47555f;border-radius:6px;flex:none;cursor:pointer;position:relative;transition:all .15s;background:transparent}
+.item input[type=checkbox]:checked{background:#3ecf6d;border-color:#3ecf6d}
+.item input[type=checkbox]:checked::after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid #16202a;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.item label{flex:1;font-size:.95rem;color:#E4E2DB;cursor:pointer}
+.item.done label{color:#6a7178;text-decoration:line-through}
+.item .del{background:none;border:none;color:#5a636b;cursor:pointer;font-size:1.1rem;line-height:1;padding:2px 6px;border-radius:6px;opacity:0;transition:all .15s}
+.item:hover .del,.item:focus-within .del{opacity:1}
+.item .del:hover{color:var(--red);background:#26333d}
+.additem{display:flex;gap:8px;margin-top:16px}
+.additem input[type=text]{flex:1;background:#16202a;border:1px solid #2b3843;border-radius:8px;padding:10px 12px;color:#E4E2DB;font-family:inherit;font-size:.9rem}
+.additem input[type=text]::placeholder{color:#5a636b}
+.additem button{background:var(--red);color:#fff;border:none;border-radius:8px;padding:0 16px;font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:.86rem;cursor:pointer;transition:filter .2s;min-height:40px}
+.additem button:hover{filter:brightness(1.08)}
+textarea.notes{width:100%;min-height:150px;background:#16202a;border:1px solid #2b3843;border-radius:10px;padding:14px;color:#E4E2DB;font-family:inherit;font-size:.95rem;line-height:1.6;resize:vertical}
+.savedhint{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:#7f868c;margin-top:8px;height:14px}
+
+.panel.budget{background:#1e2a34;border:1px solid #2b3843}
+.names-row{display:flex;align-items:center;gap:10px;margin:14px 0 18px}
+.name-input{flex:1;background:#16202a;border:1px solid #2b3843;border-radius:8px;padding:9px 12px;color:#E4E2DB;font-family:"IBM Plex Sans",sans-serif;font-size:.9rem;min-width:0}
+.name-input::placeholder{color:#5a636b}
+.expense-row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #26333d}
+.expense-row:last-child{border-bottom:none}
+.expense-row .ed{font-size:.93rem;color:#E4E2DB}
+.expense-row .ea{font-family:"IBM Plex Mono",monospace;font-size:.85rem;color:#E4E2DB;white-space:nowrap}
+.expense-row .ep{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.05em;color:#9aa1a7;background:#16202a;border:1px solid #2b3843;border-radius:20px;padding:3px 10px;white-space:nowrap}
+.expense-row .del{background:none;border:none;color:#5a636b;cursor:pointer;font-size:1.1rem;line-height:1;padding:2px 6px;border-radius:6px;transition:all .15s}
+.expense-row .del:hover{color:var(--red);background:#26333d}
+.expense-empty{color:#7f868c;font-size:.9rem;padding:10px 0}
+.expense-addrow{display:grid;grid-template-columns:1.6fr .8fr 1fr auto;gap:8px;margin-top:16px}
+.expense-addrow input,.expense-addrow select{background:#16202a;border:1px solid #2b3843;border-radius:8px;padding:10px 12px;color:#E4E2DB;font-family:inherit;font-size:.88rem;min-width:0}
+.expense-addrow select{font-family:"IBM Plex Mono",monospace;font-size:.78rem}
+.expense-addrow button{background:var(--red);color:#fff;border:none;border-radius:8px;padding:0 14px;font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:.86rem;cursor:pointer;min-height:40px}
+.balance-line{margin-top:16px;color:#8fd4a6;font-size:.82rem;letter-spacing:.02em}
+@media(max-width:700px){.expense-addrow{grid-template-columns:1fr 1fr}}
+
+:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:4px}
+.tools :focus-visible{outline-color:#3ecf6d}
+
+/* ---------- footer ---------- */
+footer{padding:56px 0 64px;border-top:1px solid var(--line)}
+footer .fgrid{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:flex-end}
+footer .display{font-size:1.4rem}
+footer p{color:var(--stone);font-size:.85rem;font-family:"IBM Plex Mono",monospace;letter-spacing:.03em}
+footer .heart{color:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- ══════════ WACHTWOORDSCHERM ══════════ -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-cross"></div>
+    <div class="gate-eyebrow">Alleen voor jullie twee</div>
+    <h1 class="gate-title">Zwitserland 2026</h1>
+    <p class="gate-sub">Voer het wachtwoord in om de reis te openen.</p>
+    <form id="gate-form">
+      <input type="password" id="gate-input" placeholder="Wachtwoord" autocomplete="current-password" autofocus>
+      <button type="submit">Open</button>
+    </form>
+    <p class="gate-err" id="gate-err"></p>
+  </div>
+</div>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   ▼▼▼  WACHTWOORD HIER WIJZIGEN  ▼▼▼
+   Verander de tekst tussen de aanhalingstekens naar jullie eigen
+   wachtwoord, en zet het bestand daarna opnieuw online.
+   ═══════════════════════════════════════════════════════════════ */
+const SITE_PASSWORD = "zwitserland2026";
+/* ▲▲▲  einde wachtwoord  ▲▲▲ */
+(function(){
+  const KEY = "zwit_unlocked_v1";
+  const gate = document.getElementById("gate");
+  const form = document.getElementById("gate-form");
+  const input = document.getElementById("gate-input");
+  const err = document.getElementById("gate-err");
+
+  function unlock(){
+    gate.style.display = "none";
+    document.body.style.overflow = "";
+  }
+  document.body.style.overflow = "hidden";
+  try{
+    if(localStorage.getItem(KEY) === "1"){ unlock(); return; }
+  }catch(e){}
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    if(input.value === SITE_PASSWORD){
+      try{ localStorage.setItem(KEY, "1"); }catch(e){}
+      unlock();
+    }else{
+      err.textContent = "Dat is niet het juiste wachtwoord — probeer het nog eens.";
+      input.value = "";
+      input.focus();
+    }
+  });
+})();
+</script>
+
+<!-- ══════════ ZIJBALK NAVIGATIE ══════════ -->
+<div class="sidebar">
+  <div class="brand"><span class="cross"></span>ZWITSERLAND&nbsp;2026</div>
+  <nav class="sidenav" id="sidenav">
+    <a href="#schema">Planner</a>
+    <a href="#kaart">Kaart</a>
+    <a href="#luzern">Luzern</a>
+    <a href="#glarus">Glarus</a>
+    <a href="#activiteiten">Meer ideeën</a>
+    <a href="#praktisch">Praktisch</a>
+    <a href="#lijstjes">Checklists</a>
+  </nav>
+  <div class="sidebar-foot">Grüezi!</div>
+</div>
+
+<div class="page">
+<!-- ══════════ HERO ══════════ -->
+<header class="hero">
+  <div class="wrap hero-inner">
+    <div class="eyebrow">Een week in de Zwitserse Alpen · met z'n tweeën</div>
+    <h1 class="display">Zwitserland<br><span class="amp">2026</span></h1>
+    <div class="hero-sub">
+      <span class="place"><b>BESTEMMINGEN</b> &nbsp;Luzern &amp; Glarus</span>
+      <span class="place"><b>DUUR</b> &nbsp;<span id="duration-days">7 dagen</span></span>
+    </div>
+    <div class="count">
+      <div><div class="big" id="cd-num">–</div></div>
+      <div class="lab" id="cd-lab">dagen te gaan</div>
+    </div>
+    <div class="datectl">
+      <span>Vertrek:&nbsp;<b id="date-show">nog niet ingesteld</b></span>
+      <button id="date-edit">wijzig</button>
+      <input type="date" id="date-input" style="display:none">
+    </div>
+  </div>
+  <svg class="range" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+    <polygon points="0,220 0,150 180,70 320,130 460,60 520,90 640,20 760,110 900,50 1040,120 1180,55 1320,120 1440,80 1440,220" fill="#EDE9DF"/>
+    <polygon points="0,220 0,180 220,120 380,160 520,110 660,150 820,90 980,150 1140,110 1300,155 1440,130 1440,220" fill="#E2DDD1"/>
+    <polygon points="640,20 610,50 670,50" fill="#fff"/>
+    <polygon points="460,60 438,84 484,84" fill="#fff"/>
+    <polygon points="900,50 878,74 924,74" fill="#fff"/>
+    <polygon points="1180,55 1160,77 1202,77" fill="#fff"/>
+  </svg>
+</header>
+
+<!-- ══════════ PLANNER (editable days) ══════════ -->
+<section id="schema">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow"><span class="tick"></span> Planner</div>
+      <h2 class="display">Dag voor dag, helemaal van jullie</h2>
+      <p>Voeg dagen en items toe, versleep ze in de gewenste volgorde, en geef elk dagdeel een plek zodat de kaart hieronder automatisch meebeweegt. Alles wat je hier invult, gebruikt de kaart direct.</p>
+      <div class="sync" id="sync"><span class="dot"></span><span id="sync-text">Controleren…</span></div>
+    </div>
+
+    <div class="daybar" id="daybar"></div>
+    <div id="daycard-host"></div>
+  </div>
+</section>
+
+<!-- ══════════ KAART & ROUTE ══════════ -->
+<section id="kaart" style="background:var(--sand)">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow"><span class="tick"></span> Kaart &amp; route</div>
+      <h2 class="display">Jullie route, automatisch</h2>
+      <p>Deze kaart volgt de planner hierboven: elke plek die je aan een dag toevoegt, verschijnt hier als genummerde pin, in dezelfde volgorde. Elke stop krijgt een Google&nbsp;Maps-link, en tussen elke twee opeenvolgende stops staat een link met de routebeschrijving.</p>
+    </div>
+
+    <div class="maprow">
+      <div class="mapwrap">
+        <div id="map"></div>
+        <div class="maphint" id="map-hint"></div>
+      </div>
+
+      <div class="stopside">
+        <div class="panel-head" style="margin-bottom:14px">
+          <h3 class="stops-title">Stops op volgorde</h3>
+          <a class="routebtn off" id="route-btn" href="#" target="_blank" rel="noopener">Hele route ↗</a>
+        </div>
+        <ol class="stops" id="stops-list">
+          <li class="stops-empty">Voeg hierboven bij een dag een plek toe — die verschijnt hier vanzelf.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ LUZERN ══════════ -->
+<section id="luzern">
+  <div class="wrap">
+    <div class="place-block luzern">
+      <div class="kicker">
+        <h2 class="display">Luzern</h2>
+        <span class="nights">Aan het Vierwaldstättersee</span>
+      </div>
+      <p class="lede">De klassieke start: een middeleeuws stadje aan een diepblauw meer, ingeklemd tussen twee huisbergen. Compact genoeg om te lopen, met de bergen op een half uur afstand. Klik "voeg toe aan planner" om een idee meteen bij een dag te zetten.</p>
+      <div class="cards" id="cards-luzern">
+        <div class="card" data-name="Kapellbrücke, Luzern"><div class="n">01</div><h4>Kapellbrücke</h4><p>De houten overdekte brug uit 1333 met de Wasserturm — het icoon van de stad. Mooi in de ochtend, zonder drukte.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Vierwaldstättersee, Luzern"><div class="n">02</div><h4>Boottocht op het meer</h4><p>Een raderboot over het Vierwaldstättersee. Combineer 'm meteen met de heen- of terugweg naar de bergen.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Mount Pilatus, Zwitserland"><div class="n">03</div><h4>Mount Pilatus</h4><p>Omhoog met 's werelds steilste tandradbaan, terug met kabelbaan (of andersom). Boven vaak zon boven de wolken.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Rigi Kulm, Zwitserland"><div class="n">04</div><h4>Rigi — Koningin der bergen</h4><p>Zachter alternatief voor Pilatus: brede uitzichten, weides en een panorama over het meer.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Löwendenkmal, Luzern"><div class="n">05</div><h4>Löwendenkmal</h4><p>Het aangrijpende Leeuwenmonument in de rots. Klein en gratis, zo meegenomen.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Museggmauer, Luzern"><div class="n">06</div><h4>Museggmauer</h4><p>Loop over de oude stadsmuur en beklim een van de torens voor uitzicht over de daken.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Verkehrshaus der Schweiz, Luzern"><div class="n">07</div><h4>Verkehrshaus (Vervoersmuseum)</h4><p>Groot interactief museum over treinen, vliegtuigen en ruimtevaart, met een planetarium. Leuk bij minder mooi weer.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Bürgenstock, Zwitserland"><div class="n">08</div><h4>Bürgenstock Trail</h4><p>Adembenemend rotspad langs de flank boven het meer, met een lift terug naar het dorp. Minder bekend dan Pilatus, net zo mooi.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Vitznau, Zwitserland"><div class="n">09</div><h4>Vitznau</h4><p>Pittoresk dorpje aan het meer, vertrekpunt van de Rigi-tandradbaan. Fijn voor een rustige lunch aan het water.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ GLARUS ══════════ -->
+<section id="glarus" style="background:var(--sand)">
+  <div class="wrap">
+    <div class="place-block glarus">
+      <div class="kicker">
+        <h2 class="display">Glarus</h2>
+        <span class="nights">Het stille Glarnerland</span>
+      </div>
+      <p class="lede">Weg van de toeristenstroom: één diep bergdal, steile flanken en dorpen die tegen de rots plakken. Hier draait het om wandelen, water en rust.</p>
+      <div class="cards" id="cards-glarus">
+        <div class="card" data-name="Klöntalersee, Glarus"><div class="n">01</div><h4>Klöntalersee</h4><p>Turquoise bergmeer onder de Glärnisch. Een vlakke wandeling rond het meer duurt zo'n 3 uur — of gewoon aan de oever hangen.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Braunwald, Zwitserland"><div class="n">02</div><h4>Braunwald</h4><p>Autovrij zonneterras-dorp, alleen bereikbaar met de kabelbaan. Rustige familievriendelijke wandelpaden bovenaan.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Elm GL, Zwitserland"><div class="n">03</div><h4>Elm &amp; Martinsloch</h4><p>Bergdorp met een natuurlijk gat in de bergwand waar de zon twee keer per jaar precies doorheen schijnt.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Klausenpass, Zwitserland"><div class="n">04</div><h4>Klausenpass</h4><p>Spectaculaire bergpas met haarspeldbochten richting Uri. De moeite als je een (huur)auto hebt.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Klöntal, Glarus"><div class="n">05</div><h4>Berglistüber</h4><p>Fotogenieke waterval bij het Klöntal — je kunt er achterlangs lopen.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Glarus, Zwitserland"><div class="n">06</div><h4>Landsgemeinde-plein</h4><p>In Glarus stemt men nog met handopsteken op het plein. Leuk stukje geschiedenis om even te lezen ter plekke.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Freulerpalast, Näfels"><div class="n">07</div><h4>Freulerpalast</h4><p>Barok landhuis in Näfels met een klein streekmuseum. Compact en snel gedaan tussen twee wandelingen door.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Kies Sportbahnen Mollis, Zwitserland"><div class="n">08</div><h4>Mollis &amp; de Kerenzerberg</h4><p>Rustig wandelgebied met uitzicht op het Walensee. Goed alternatief als Braunwald of Elm vol zit.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+        <div class="card" data-name="Sernftal, Glarus"><div class="n">09</div><h4>Sernftal</h4><p>Smal zijdal naar Elm, met kleine dorpjes en weinig toeristen. Fijne autorit of fietstocht.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ MEER IDEEËN ══════════ -->
+<section id="activiteiten">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow"><span class="tick"></span> Nog meer inspiratie</div>
+      <h2 class="display">Aanbevolen activiteiten</h2>
+      <p>Een bredere greep uit dingen die goed passen bij een reis door Midden-Zwitserland — eten, wandelen, en een paar uitstapjes net iets verder weg. Ook deze kun je met één klik aan een planner-dag toevoegen.</p>
+    </div>
+    <div class="cards" id="cards-extra">
+      <div class="card" data-name="Käsekeller Studer, Luzern"><div class="n">01</div><h4>Kaasproeverij</h4><p>Een lokale Käsekeller of kaasmakerij bezoeken voor Zwitserse kaas rechtstreeks van de boer.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+      <div class="card" data-name="Stansstad, Zwitserland"><div class="n">02</div><h4>Stanserhorn</h4><p>Cabrio-kabelbaan zonder dak — uniek uitzicht tijdens de rit zelf, niet alleen boven.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+      <div class="card" data-name="Sattel Hochstuckli, Zwitserland"><div class="n">03</div><h4>Sattel-Hochstuckli</h4><p>Kabelbaan met een lange rodelbaan naar beneden — leuke actieve middag als het weer goed is.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+      <div class="card" data-name="Walensee, Zwitserland"><div class="n">04</div><h4>Walensee</h4><p>Turquoise meer net over de grens van het Glarnerland, bekend van de steile rotswanden erlangs.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+      <div class="card" data-name="Weggis, Zwitserland"><div class="n">05</div><h4>Weggis</h4><p>Zonnig dorp aan het Vierwaldstättersee met palmbomen langs de boulevard — verrassend mediterraan gevoel.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+      <div class="card" data-name="Rapperswil, Zwitserland"><div class="n">06</div><h4>Rapperswil</h4><p>Kasteelstadje aan het Zürichsee, goed te combineren met de treinreis tussen Luzern en Glarus.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+      <div class="card" data-name="Alpkäserei Ahorn, Elm"><div class="n">07</div><h4>Alpkäserei bezoeken</h4><p>Kijk hoe alpkaas gemaakt wordt op een echte berghoeve, vaak met proeverij en verkoop.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+      <div class="card" data-name="Therme Zurich, Zwitserland"><div class="n">08</div><h4>Thermale baden</h4><p>Een rustdag met sauna en warmwaterbaden — fijn na twee dagen wandelen in de bergen.</p><button class="addbtn">+ Voeg toe aan planner</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ PRAKTISCH ══════════ -->
+<section id="praktisch">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow"><span class="tick"></span> Goed om te weten</div>
+      <h2 class="display">Praktisch</h2>
+      <p>De kleine dingen die een reis soepel maken. Print of screenshot desnoods het rijtje noodnummers.</p>
+    </div>
+    <div class="facts">
+      <div class="fact"><div class="ic">🇨🇭</div><h4>Valuta</h4><p>Zwitserse frank <b>(CHF)</b>. Overal pinnen/contactloos werkt prima. Neem wat cash mee voor berghutten en fooien.</p></div>
+      <div class="fact"><div class="ic">🗣️</div><h4>Taal</h4><p>Duits (Zwitserduits) in deze regio. <b>Engels</b> wordt breed gesproken; een "Grüezi" als groet valt goed.</p></div>
+      <div class="fact"><div class="ic">🔌</div><h4>Stopcontact</h4><p><span class="em">Type J</span> — neem een adapter mee. Veel platte Type C-stekkers passen ook, dikke geaarde niet.</p></div>
+      <div class="fact"><div class="ic">🚑</div><h4>Noodnummers</h4><p><b>112</b> algemeen · <b>144</b> ambulance · <b>117</b> politie · <b>1414</b> REGA bergredding.</p></div>
+      <div class="fact"><div class="ic">🚆</div><h4>Vervoer</h4><p>Alles per trein/bus met de <b>SBB</b>-app. Overweeg een <b>Swiss Travel Pass</b> of Halbtax-kaart als je veel bergbanen pakt.</p></div>
+      <div class="fact"><div class="ic">☀️</div><h4>Bergzon &amp; weer</h4><p>Zon is fel op hoogte: <b>zonnebrand</b> en lagen mee. Check het weer per dal — het kan er zomers snel omslaan.</p></div>
+      <div class="fact"><div class="ic">💧</div><h4>Water</h4><p>Kraanwater is uitstekend te drinken. Bij de meeste dorpsfonteinen kun je je fles bijvullen.</p></div>
+      <div class="fact"><div class="ic">🕐</div><h4>Tijd &amp; fooi</h4><p>Zelfde tijdzone als Nederland. Fooi is niet verplicht; afronden of ~5–10% bij goede service.</p></div>
+    </div>
+
+    <div class="wxrow" id="wxrow">
+      <div class="wxcard" id="wx-luzern" data-place="Luzern">
+        <div class="wxhead"><h4>Luzern</h4><span class="wxnow mono">laden…</span></div>
+        <div class="wxdays" id="wx-luzern-days"></div>
+      </div>
+      <div class="wxcard" id="wx-glarus" data-place="Glarus">
+        <div class="wxhead"><h4>Glarus</h4><span class="wxnow mono">laden…</span></div>
+        <div class="wxdays" id="wx-glarus-days"></div>
+      </div>
+    </div>
+    <div class="wxhint mono">Live weerbericht (Open-Meteo) — toont het actuele beeld; pas vlak voor vertrek betekenisvol voor jullie reisdatum.</div>
+  </div>
+</section>
+
+<!-- ══════════ SHARED TOOLS ══════════ -->
+<section id="lijstjes" class="tools">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow"><span class="tick"></span> Samen bijhouden</div>
+      <h2 class="display">Inpaklijst &amp; te regelen</h2>
+      <p>Vink af, voeg toe, laat notities achter. Met de deelfunctie aan zien jij en je vriendin elkaars wijzigingen meteen — net als bij de planner en de kaart hierboven.</p>
+      <div class="backup-row">
+        <button class="backup-btn" id="backup-export">⬇ Exporteer back-up</button>
+        <button class="backup-btn" id="backup-import-btn">⬆ Herstel van back-up</button>
+        <input type="file" id="backup-import-file" accept="application/json" style="display:none">
+        <span class="backup-hint mono" id="backup-hint"></span>
+      </div>
+    </div>
+
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Inpaklijst</h3>
+          <span class="progress" id="pack-prog">0 / 0</span>
+        </div>
+        <div class="bar pine"><span id="pack-bar"></span></div>
+        <div id="pack-list"></div>
+        <div class="additem">
+          <input type="text" id="pack-input" placeholder="Iets toevoegen…">
+          <button id="pack-add">Voeg toe</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel" style="margin-bottom:22px">
+          <div class="panel-head">
+            <h3>Te regelen</h3>
+            <span class="progress" id="todo-prog">0 / 0</span>
+          </div>
+          <div class="bar"><span id="todo-bar"></span></div>
+          <ul class="list" id="todo-list"></ul>
+          <div class="additem">
+            <input type="text" id="todo-input" placeholder="Taak toevoegen…">
+            <button id="todo-add">Voeg toe</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Notities</h3></div>
+          <textarea class="notes" id="notes" placeholder="Ideeën, reserveringsnummers, restaurantjes…"></textarea>
+          <div class="savedhint" id="notes-hint"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel budget" style="margin-top:22px">
+      <div class="panel-head">
+        <h3>Kostenverdeler</h3>
+        <span class="progress" id="budget-total">CHF 0</span>
+      </div>
+      <div class="names-row">
+        <input type="text" class="name-input" id="person-0" placeholder="Naam 1">
+        <span class="mono" style="color:#5a636b">↔</span>
+        <input type="text" class="name-input" id="person-1" placeholder="Naam 2">
+      </div>
+      <ul class="list" id="expense-list"></ul>
+      <div class="expense-addrow">
+        <input type="text" id="exp-desc" placeholder="Omschrijving…">
+        <input type="number" id="exp-amount" placeholder="CHF" step="0.01" min="0">
+        <select id="exp-payer"></select>
+        <button id="exp-add">Voeg toe</button>
+      </div>
+      <div class="balance-line mono" id="balance-line"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer>
+  <div class="wrap fgrid">
+    <div>
+      <div class="display">Zwitserland 2026</div>
+      <p style="margin-top:8px">Onze week op reis</p>
+    </div>
+    <p>Gemaakt met een beetje <span class="heart">♥</span> voor de bergen · Grüezi!</p>
+  </div>
+</footer>
+</div><!-- /.page -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+/* ═══════════════════════════════════════════════════════════════
+   ▼▼▼  DELEN AANZETTEN — PLAK HIER JE FIREBASE-CONFIG  ▼▼▼
+   Laat dit leeg = alles werkt alleen op jouw eigen apparaat.
+   Vul het in = jij en je vriendin zien elkaars wijzigingen live,
+   inclusief de planner en de kaart. Haal de // weg en plak de
+   waarden uit je Firebase-project tussen de aanhalingstekens.
+   ═══════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAKQGdY70CvyPJvzhgvAwySr-KUFdYCw0I",
+  authDomain: "vakantie-zwitserland-2026.firebaseapp.com",
+  databaseURL: "https://vakantie-zwitserland-2026-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "vakantie-zwitserland-2026",
+  storageBucket: "vakantie-zwitserland-2026.firebasestorage.app",
+  messagingSenderId: "267767954441",
+  appId: "1:267767954441:web:7e520e1d19ce38034f0cd8"
+};
+/* ▲▲▲  einde config  ▲▲▲ */
+
+
+/* ---------- standaard-inhoud ---------- */
+const DEFAULT_PACK = [
+  {cat:"Documenten", items:["Paspoort / ID","Reisverzekering","Hotelbevestigingen","Treinkaartjes / Swiss Travel Pass","Pinpas & wat cash (CHF)"]},
+  {cat:"Kleding", items:["Wandelschoenen","Regenjas","Warme trui / fleece","Lange broek","Ondergoed & sokken","Zwemkleding","Zonnebril"]},
+  {cat:"Elektronica", items:["Telefoon & oplader","Type J adapter","Powerbank","Camera"]},
+  {cat:"Toiletspullen", items:["Tandenborstel & pasta","Zonnebrand","Medicijnen","Pleisters / EHBO","Lippenbalsem"]},
+  {cat:"Diversen", items:["Drinkfles","Dagrugzak","Snacks voor onderweg","Verrekijker"]},
+];
+const DEFAULT_TODO = [
+  "Hotel in Luzern boeken","Hotel in Glarus boeken","Treinkaartjes / Swiss Travel Pass kopen",
+  "Reisverzekering checken","Bergbaan-tickets bekijken (Pilatus/Rigi)","Route Luzern → Glarus plannen","Weer checken vlak voor vertrek"
+];
+const DEFAULT_DAYS = [
+  {id:"d1", title:"Heenreis naar Luzern", loc:"Luzern, Zwitserland",
+    items:[{id:"i1",text:"Aankomen & inchecken",done:false},{id:"i2",text:"Avondwandeling langs de Reuss",done:false}]},
+  {id:"d2", title:"Luzern: stad & meer", loc:"Kapellbrücke, Luzern",
+    items:[{id:"i3",text:"Kapellbrücke & Wasserturm",done:false},{id:"i4",text:"Löwendenkmal",done:false},{id:"i5",text:"Boottocht op het Vierwaldstättersee",done:false}]},
+  {id:"d3", title:"Luzern: de bergen in", loc:"Mount Pilatus, Zwitserland",
+    items:[{id:"i6",text:"Tandradbaan omhoog",done:false},{id:"i7",text:"Wandelen boven de wolken",done:false},{id:"i8",text:"Kabelbaan terug naar beneden",done:false}]},
+  {id:"d4", title:"Transfer naar Glarus", loc:"Glarus, Zwitserland",
+    items:[{id:"i9",text:"Trein via Zürich / Ziegelbrücke",done:false},{id:"i10",text:"Inchecken in Glarus",done:false}]},
+  {id:"d5", title:"Glarus: Klöntalersee", loc:"Klöntalersee, Glarus",
+    items:[{id:"i11",text:"Wandeling rond het meer",done:false},{id:"i12",text:"Picknick aan de oever",done:false}]},
+  {id:"d6", title:"Glarus: Braunwald", loc:"Braunwald, Zwitserland",
+    items:[{id:"i13",text:"Kabelbaan naar boven",done:false},{id:"i14",text:"Wandelpad rond het dorp",done:false}]},
+  {id:"d7", title:"Terugreis", loc:"Zürich, Zwitserland",
+    items:[{id:"i15",text:"Rustig ontbijten",done:false},{id:"i16",text:"Terugreis naar huis",done:false}]},
+];
+
+/* ---------- store: firebase óf localStorage (met live cross-tab sync) ---------- */
+const HAS_FB = !!(firebaseConfig && firebaseConfig.databaseURL);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const asArray = v => Array.isArray(v) ? v : (v && typeof v === "object" ? Object.values(v) : []);
+
+let store;
+async function initStore(){
+  if(HAS_FB){
+    try{
+      const {initializeApp} = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+      const {getDatabase, ref, onValue, set} = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+      store = {
+        live:true,
+        subscribe(key, cb){ onValue(ref(db,"trip/"+key), s => cb(s.exists()? s.val() : null)); },
+        save(key, val){ set(ref(db,"trip/"+key), val); }
+      };
+      return;
+    }catch(e){ console.warn("Firebase mislukt, val terug op dit apparaat:", e); }
+  }
+  const subs = {};
+  const notify = (key, val) => (subs[key]||[]).forEach(f => f(val));
+  store = {
+    live:false,
+    subscribe(key, cb){
+      (subs[key]||(subs[key]=[])).push(cb);
+      let v=null; try{ const raw=localStorage.getItem("zwit_"+key); v = raw==null?null:JSON.parse(raw); }catch(_){}
+      cb(v);
+      window.addEventListener("storage", e => {
+        if(e.key==="zwit_"+key){ let vv=null; try{ vv=e.newValue==null?null:JSON.parse(e.newValue); }catch(_){}; notify(key, vv); }
+      });
+    },
+    save(key, val){ try{ localStorage.setItem("zwit_"+key, JSON.stringify(val)); }catch(_){}; notify(key, val); }
+  };
+}
+
+/* ---------- sync-badge ---------- */
+function paintSync(){
+  const box = document.getElementById("sync");
+  const txt = document.getElementById("sync-text");
+  if(store.live){
+    box.classList.add("live");
+    txt.textContent = "Live gedeeld — jullie zien elkaars wijzigingen";
+  }else{
+    box.classList.remove("live");
+    txt.innerHTML = 'Alleen op dit apparaat · <a href="#" id="how">delen aanzetten?</a>';
+    const how = document.getElementById("how");
+    if(how) how.onclick = e => { e.preventDefault(); alert("Delen aanzetten:\n\n1. Maak een gratis project op firebase.google.com\n2. Zet er een Realtime Database bij (testmodus)\n3. Voeg een web-app toe en kopieer de config\n4. Plak die bovenin dit bestand bij 'firebaseConfig'\n5. Zet het bestand weer online\n\nZie de stap-voor-stap uitleg die je bij dit bestand kreeg."); };
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PLANNER — bewerkbare dagen met versleepbare items
+   ══════════════════════════════════════════════════════════════ */
+let daysData = null;
+let activeDay = null;
+let dragItemId = null;
+
+function updateDuration(){
+  const el = document.getElementById("duration-days");
+  if(!el || !daysData) return;
+  const n = daysData.length;
+  el.textContent = n === 1 ? "1 dag" : n + " dagen";
+}
+
+function renderDayBar(){
+  const bar = document.getElementById("daybar");
+  bar.innerHTML = "";
+  daysData.forEach((d, i) => {
+    const b = document.createElement("button");
+    b.className = "daytab" + (d.id === activeDay ? " active" : "");
+    const label = (d.title && d.title.trim()) ? d.title.trim() : ("Dag "+(i+1));
+    b.innerHTML = `<span class="dtab-name">${escAttr(label)}</span><span class="cnt">${d.items.length}</span>`;
+    b.title = label;
+    b.onclick = () => { activeDay = d.id; renderDayBar(); renderDayCard(); };
+    bar.appendChild(b);
+  });
+  const add = document.createElement("button");
+  add.className = "addday";
+  add.textContent = "+ Dag toevoegen";
+  add.onclick = () => {
+    const nd = {id:uid(), title:"Nieuwe dag", loc:"", items:[]};
+    daysData.push(nd); activeDay = nd.id;
+    store.save("days", daysData);
+  };
+  bar.appendChild(add);
+}
+
+function renderDayCard(){
+  const host = document.getElementById("daycard-host");
+  const day = daysData.find(d => d.id === activeDay);
+  if(!day){ host.innerHTML = ""; return; }
+  const idx = daysData.findIndex(d => d.id === activeDay);
+
+  host.innerHTML = "";
+  const card = document.createElement("div");
+  card.className = "daycard";
+
+  const head = document.createElement("div");
+  head.className = "daycard-head";
+  head.innerHTML = `
+    <div class="titles">
+      <div class="dnum-row">
+        <button class="day-prev" title="Vorige dag bekijken" ${idx<=0?"disabled":""}>◀</button>
+        <div class="dnum">DAG ${idx+1} VAN ${daysData.length}</div>
+        <button class="day-next" title="Volgende dag bekijken" ${idx>=daysData.length-1?"disabled":""}>▶</button>
+      </div>
+      <input type="text" class="dtitle-input" value="${escAttr(day.title)}" placeholder="Titel van de dag" aria-label="Titel van de dag">
+      <input type="text" class="dloc-input" value="${escAttr(day.loc||"")}" placeholder="📍 Plaats voor op de kaart, bv. Braunwald, Zwitserland" aria-label="Plaats voor deze dag">
+    </div>
+    <div class="daytools">
+      <button class="mv-left" title="Deze dag eerder in de planning zetten">Zet naar voren</button>
+      <button class="mv-right" title="Deze dag later in de planning zetten">Zet naar achteren</button>
+      <button class="del-day">Verwijder dag</button>
+    </div>`;
+  card.appendChild(head);
+
+  const ul = document.createElement("ul");
+  ul.className = "plan-items";
+  if(day.items.length === 0){
+    const p = document.createElement("li"); p.className="plan-empty"; p.textContent="Nog geen items — voeg er hieronder eentje toe.";
+    ul.appendChild(p);
+  }else{
+    day.items.forEach(it => ul.appendChild(planRow(day, it)));
+  }
+  card.appendChild(ul);
+
+  const addrow = document.createElement("div");
+  addrow.className = "plan-addrow";
+  addrow.innerHTML = `<input type="text" placeholder="Wat staat er op het programma…"><button>Voeg toe</button>`;
+  const inp = addrow.querySelector("input"), btn = addrow.querySelector("button");
+  const doAdd = () => {
+    const t = inp.value.trim(); if(!t) return;
+    day.items.push({id:uid(), text:t, done:false});
+    inp.value = "";
+    store.save("days", daysData);
+  };
+  btn.onclick = doAdd;
+  inp.addEventListener("keydown", e => { if(e.key==="Enter") doAdd(); });
+  card.appendChild(addrow);
+
+  const hint = document.createElement("div");
+  hint.className = "plan-hint";
+  hint.textContent = "Sleep met het handvat (⠿) om items binnen de dag te herordenen.";
+  card.appendChild(hint);
+
+  const noteWrap = document.createElement("div");
+  noteWrap.className = "daynote-wrap";
+  noteWrap.innerHTML = `<div class="daynote-lab mono">Notitie voor deze dag</div><textarea class="daynote" placeholder="Bonnetjes, restaurantnaam, reserveringsnummer…">${day.note||""}</textarea>`;
+  card.appendChild(noteWrap);
+  const noteTa = noteWrap.querySelector(".daynote");
+  let dayNoteTimer = null;
+  noteTa.addEventListener("input", () => {
+    clearTimeout(dayNoteTimer);
+    dayNoteTimer = setTimeout(() => { day.note = noteTa.value; store.save("days", daysData); }, 500);
+  });
+
+  host.appendChild(card);
+
+  const titleInp = head.querySelector(".dtitle-input");
+  const locInp = head.querySelector(".dloc-input");
+  titleInp.addEventListener("change", () => { day.title = titleInp.value; store.save("days", daysData); });
+  locInp.addEventListener("change", () => { day.loc = locInp.value; store.save("days", daysData); });
+
+  const prevBtn = head.querySelector(".day-prev");
+  const nextBtn = head.querySelector(".day-next");
+  prevBtn.onclick = () => {
+    if(idx <= 0) return;
+    activeDay = daysData[idx-1].id;
+    renderDayBar(); renderDayCard();
+  };
+  nextBtn.onclick = () => {
+    if(idx >= daysData.length-1) return;
+    activeDay = daysData[idx+1].id;
+    renderDayBar(); renderDayCard();
+  };
+
+  head.querySelector(".mv-left").onclick = () => {
+    if(idx <= 0) return;
+    [daysData[idx-1], daysData[idx]] = [daysData[idx], daysData[idx-1]];
+    store.save("days", daysData);
+  };
+  head.querySelector(".mv-right").onclick = () => {
+    if(idx >= daysData.length-1) return;
+    [daysData[idx+1], daysData[idx]] = [daysData[idx], daysData[idx+1]];
+    store.save("days", daysData);
+  };
+  head.querySelector(".del-day").onclick = () => {
+    if(daysData.length <= 1) { alert("Je moet minstens één dag overhouden."); return; }
+    if(!confirm(`Dag "${day.title||('Dag '+(idx+1))}" verwijderen?`)) return;
+    daysData = daysData.filter(d => d.id !== day.id);
+    if(activeDay === day.id) activeDay = daysData[0].id;
+    store.save("days", daysData);
+  };
+}
+
+function planRow(day, it){
+  const li = document.createElement("li");
+  li.className = "plan-item" + (it.done ? " done" : "");
+  li.draggable = true;
+  li.dataset.id = it.id;
+
+  const handle = document.createElement("span"); handle.className="handle"; handle.textContent="⠿";
+  const txt = document.createElement("input"); txt.type="text"; txt.className="txt"; txt.value = it.text;
+  txt.addEventListener("change", () => { it.text = txt.value; store.save("days", daysData); });
+
+  const ctrls = document.createElement("div"); ctrls.className="pctrls";
+  const cb = document.createElement("input"); cb.type="checkbox"; cb.checked = it.done; cb.setAttribute("aria-label","Afgevinkt");
+  cb.onchange = () => { it.done = cb.checked; store.save("days", daysData); };
+  const del = document.createElement("button"); del.className="rm"; del.innerHTML="&times;"; del.title="Verwijderen"; del.setAttribute("aria-label","Verwijder item");
+  del.onclick = () => { day.items = day.items.filter(x => x.id !== it.id); store.save("days", daysData); };
+  ctrls.append(cb, del);
+
+  li.append(handle, txt, ctrls);
+
+  li.addEventListener("dragstart", () => { dragItemId = it.id; li.classList.add("drag"); });
+  li.addEventListener("dragend", () => { li.classList.remove("drag"); document.querySelectorAll(".plan-item.over").forEach(x=>x.classList.remove("over")); });
+  li.addEventListener("dragover", e => { e.preventDefault(); li.classList.add("over"); });
+  li.addEventListener("dragleave", () => li.classList.remove("over"));
+  li.addEventListener("drop", e => {
+    e.preventDefault(); li.classList.remove("over");
+    if(!dragItemId || dragItemId === it.id) return;
+    const from = day.items.findIndex(x => x.id === dragItemId);
+    const to = day.items.findIndex(x => x.id === it.id);
+    if(from < 0 || to < 0) return;
+    const [moved] = day.items.splice(from, 1);
+    day.items.splice(to, 0, moved);
+    store.save("days", daysData);
+  });
+
+  return li;
+}
+
+function escAttr(s){ return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+
+/* "voeg toe aan planner" knoppen bij Luzern/Glarus kaartjes */
+function wireInspirationCards(){
+  document.querySelectorAll(".card .addbtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const card = btn.closest(".card");
+      const name = card.dataset.name;
+      const title = card.querySelector("h4").textContent;
+      if(!daysData || daysData.length===0) return;
+      const day = daysData.find(d=>d.id===activeDay) || daysData[0];
+      day.items.push({id:uid(), text:title, done:false});
+      if(!day.loc) day.loc = name;
+      store.save("days", daysData);
+      btn.textContent = "✓ Toegevoegd aan " + (day.title || "je dag");
+      setTimeout(()=>{ btn.textContent = "+ Voeg toe aan planner"; }, 1800);
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   KAART — trekt plaatsen automatisch uit daysData (dag.loc)
+   ══════════════════════════════════════════════════════════════ */
+let map, layerGroup, routeLine;
+const geocodeCache = {}; // naam -> {lat,lon} | null (persisted in-memory this session)
+
+function initMap(){
+  map = L.map("map", {scrollWheelZoom:false}).setView([46.95, 8.9], 8);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 18
+  }).addTo(map);
+  layerGroup = L.layerGroup().addTo(map);
+}
+
+function pinIcon(n){
+  return L.divIcon({ className:"", html:`<div class="pin"><span>${n}</span></div>`, iconSize:[26,26], iconAnchor:[13,24] });
+}
+
+async function geocode(name){
+  const key = name.trim().toLowerCase();
+  if(!key) return null;
+  if(key in geocodeCache) return geocodeCache[key];
+  try{
+    const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(name);
+    const res = await fetch(url, {headers:{"Accept":"application/json"}});
+    const data = await res.json();
+    if(data && data[0]){
+      const r = {lat:parseFloat(data[0].lat), lon:parseFloat(data[0].lon)};
+      geocodeCache[key] = r; return r;
+    }
+  }catch(e){ /* offline of geblokkeerd: negeer stil */ }
+  geocodeCache[key] = null;
+  return null;
+}
+
+async function fetchFullRoute(coords){
+  if(coords.length < 2) return null;
+  const coordStr = coords.map(c => `${c.lon},${c.lat}`).join(";");
+  try{
+    const url = `https://router.project-osrm.org/route/v1/driving/${coordStr}?overview=full&geometries=geojson`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if(!data || data.code !== "Ok" || !data.routes || !data.routes[0]) return null;
+    const route = data.routes[0];
+    const latlngs = route.geometry.coordinates.map(([lon,lat]) => [lat,lon]);
+    const legDurations = (route.legs||[]).map(l => Math.round(l.duration/60));
+    return {latlngs, legDurations};
+  }catch(e){
+    return null;
+  }
+}
+
+const travelCache = {};
+function formatDuration(mins){
+  if(mins < 60) return `${mins} min rijden`;
+  const h = Math.floor(mins/60), m = mins%60;
+  return m ? `${h}u ${m}min rijden` : `${h}u rijden`;
+}
+async function fetchTravelTime(a, b){
+  const key = `${a.lat.toFixed(4)},${a.lon.toFixed(4)}-${b.lat.toFixed(4)},${b.lon.toFixed(4)}`;
+  if(key in travelCache) return travelCache[key];
+  try{
+    const url = `https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const secs = data && data.routes && data.routes[0] ? data.routes[0].duration : null;
+    const mins = secs==null ? null : Math.round(secs/60);
+    travelCache[key] = mins;
+    return mins;
+  }catch(e){
+    travelCache[key] = null;
+    return null;
+  }
+}
+
+function gmapsSearch(name){ return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(name); }
+function gmapsDir(a,b){ return "https://www.google.com/maps/dir/?api=1&origin=" + encodeURIComponent(a) + "&destination=" + encodeURIComponent(b); }
+function gmapsFullRoute(stops){
+  if(stops.length < 2) return null;
+  const origin = stops[0], destination = stops[stops.length-1];
+  const waypoints = stops.slice(1,-1).map(s=>encodeURIComponent(s)).join("|");
+  let url = "https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(origin)+"&destination="+encodeURIComponent(destination);
+  if(waypoints) url += "&waypoints="+waypoints;
+  return url;
+}
+
+let mapRenderToken = 0;
+async function renderMap(){
+  const hint = document.getElementById("map-hint");
+  const stopsList = document.getElementById("stops-list");
+  const routeBtn = document.getElementById("route-btn");
+  const myToken = ++mapRenderToken;
+
+  const names = (daysData||[]).map(d => (d.loc||"").trim()).filter(Boolean);
+
+  if(names.length === 0){
+    layerGroup.clearLayers();
+    if(routeLine){ map.removeLayer(routeLine); routeLine=null; }
+    stopsList.innerHTML = '<li class="stops-empty">Voeg hierboven bij een dag een plek toe — die verschijnt hier vanzelf.</li>';
+    routeBtn.classList.add("off"); routeBtn.removeAttribute("href");
+    hint.textContent = "";
+    return;
+  }
+
+  hint.textContent = "Plekken opzoeken…";
+  const results = [];
+  for(const name of names){
+    const g = await geocode(name);
+    if(myToken !== mapRenderToken) return; // een nieuwere render is gestart
+    results.push({name, coord:g});
+  }
+
+  layerGroup.clearLayers();
+  if(routeLine){ map.removeLayer(routeLine); routeLine=null; }
+  stopsList.innerHTML = "";
+
+  const found = results.filter(r => r.coord);
+  const connectors = [];
+  results.forEach((r, i) => {
+    const li = document.createElement("li");
+    li.className = "stop-row";
+    const gmLink = r.coord
+      ? `<a class="gm" href="${gmapsSearch(r.name)}" target="_blank" rel="noopener">Open in Google Maps ↗</a>`
+      : `<span class="gm miss">Locatie niet gevonden — check de spelling</span>`;
+    li.innerHTML = `<span class="num">${i+1}</span><div class="body"><div class="nm">${escAttr(r.name)}</div>${gmLink}</div><span class="src"></span>`;
+    stopsList.appendChild(li);
+
+    if(r.coord){
+      const marker = L.marker([r.coord.lat, r.coord.lon], {icon:pinIcon(i+1)});
+      marker.bindPopup(`<b>${escAttr(r.name)}</b><br><a href="${gmapsSearch(r.name)}" target="_blank" rel="noopener">Open in Google Maps ↗</a>`);
+      layerGroup.addLayer(marker);
+
+      let nextFound = null;
+      for(let j=i+1; j<results.length; j++){ if(results[j].coord){ nextFound = results[j]; break; } }
+      if(nextFound){
+        const conn = document.createElement("li");
+        conn.className = "stop-connector";
+        conn.innerHTML = `<span class="ln"></span><span class="txt">berekenen…</span>`;
+        stopsList.appendChild(conn);
+        connectors.push({el:conn.querySelector(".txt"), from:r.coord, to:nextFound.coord});
+      }
+    }
+  });
+
+  let routeIsReal = false;
+  if(found.length >= 2){
+    const routeData = await fetchFullRoute(found.map(r=>r.coord));
+    if(myToken !== mapRenderToken) return;
+    if(routeData){
+      routeIsReal = true;
+      routeLine = L.polyline(routeData.latlngs, {color:"#DA291C", weight:4, opacity:.85}).addTo(map);
+      map.fitBounds(routeLine.getBounds(), {padding:[36,36]});
+      connectors.forEach((c, i) => {
+        const mins = routeData.legDurations[i];
+        c.el.textContent = (mins==null) ? "reistijd onbekend" : "🚗 " + formatDuration(mins);
+      });
+    }else{
+      const latlngs = found.map(r => [r.coord.lat, r.coord.lon]);
+      routeLine = L.polyline(latlngs, {color:"#DA291C", weight:3, opacity:.7, dashArray:"6 6"}).addTo(map);
+      map.fitBounds(routeLine.getBounds(), {padding:[36,36]});
+      connectors.forEach(async c => {
+        try{
+          const mins = await fetchTravelTime(c.from, c.to);
+          if(myToken !== mapRenderToken) return;
+          c.el.textContent = mins==null ? "reistijd onbekend" : "🚗 " + formatDuration(mins);
+        }catch(e){
+          if(myToken === mapRenderToken) c.el.textContent = "reistijd onbekend";
+        }
+      });
+    }
+  }else if(found.length === 1){
+    map.setView([found[0].coord.lat, found[0].coord.lon], 11);
+  }
+
+  const fullRoute = gmapsFullRoute(found.map(r=>r.name));
+  if(fullRoute){
+    routeBtn.href = fullRoute; routeBtn.classList.remove("off");
+  }else{
+    routeBtn.classList.add("off"); routeBtn.removeAttribute("href");
+  }
+
+  const missing = results.length - found.length;
+  let baseHint = missing > 0
+    ? `${found.length} van ${results.length} plekken gevonden op de kaart. Controleer de namen die niet lukten.`
+    : `${found.length} ${found.length===1?"plek":"plekken"} op de kaart, in de volgorde van je planner.`;
+  if(found.length >= 2 && !routeIsReal){
+    baseHint += " Route kon niet worden opgehaald — rechte lijn getoond bij benadering.";
+  }
+  hint.textContent = baseHint;
+}
+
+/* ---------- live weer (Open-Meteo, geen key nodig) ---------- */
+const WX_PLACES = [
+  {key:"luzern", lat:47.0502, lon:8.3093},
+  {key:"glarus", lat:47.0403, lon:9.0678}
+];
+const WX_ICONS = {
+  0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",
+  51:"🌦️",53:"🌦️",55:"🌦️",56:"🌧️",57:"🌧️",
+  61:"🌧️",63:"🌧️",65:"🌧️",66:"🌧️",67:"🌧️",
+  71:"🌨️",73:"🌨️",75:"❄️",77:"❄️",
+  80:"🌦️",81:"🌧️",82:"⛈️",85:"🌨️",86:"❄️",
+  95:"⛈️",96:"⛈️",99:"⛈️"
+};
+function wxIcon(code){ return WX_ICONS[code] || "🌡️"; }
+async function fetchWeather(place){
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Europe%2FZurich&forecast_days=3`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error("weer ophalen mislukt");
+  return res.json();
+}
+async function initWeather(){
+  for(const place of WX_PLACES){
+    const card = document.getElementById("wx-"+place.key);
+    if(!card) continue;
+    const now = card.querySelector(".wxnow");
+    const days = document.getElementById("wx-"+place.key+"-days");
+    try{
+      const data = await fetchWeather(place);
+      now.innerHTML = `${wxIcon(data.current.weather_code)} <b>${Math.round(data.current.temperature_2m)}°C</b>`;
+      days.innerHTML = "";
+      data.daily.time.forEach((iso, i) => {
+        const d = new Date(iso+"T00:00:00");
+        const lab = i===0 ? "Vandaag" : d.toLocaleDateString("nl-NL",{weekday:"short"});
+        const el = document.createElement("div");
+        el.className = "wxday";
+        el.innerHTML = `<div class="d">${lab}</div><div class="ic">${wxIcon(data.daily.weather_code[i])}</div><div class="t">${Math.round(data.daily.temperature_2m_max[i])}° <span class="lo">${Math.round(data.daily.temperature_2m_min[i])}°</span></div>`;
+        days.appendChild(el);
+      });
+    }catch(e){
+      now.textContent = "niet beschikbaar";
+    }
+  }
+}
+
+/* ---------- inpaklijst ---------- */
+let packData = null;
+function seedPack(){ let i=0; return DEFAULT_PACK.flatMap(g => g.items.map(t => ({id:uid()+(i++), cat:g.cat, text:t, done:false}))); }
+function renderPack(){
+  const list = document.getElementById("pack-list");
+  list.innerHTML = "";
+  const cats = [...new Set(packData.map(x=>x.cat))];
+  cats.forEach(cat => {
+    const lab = document.createElement("div"); lab.className="catlabel"; lab.textContent=cat; list.appendChild(lab);
+    const ul = document.createElement("ul"); ul.className="list";
+    packData.filter(x=>x.cat===cat).forEach(it => ul.appendChild(rowPack(it)));
+    list.appendChild(ul);
+  });
+  const done = packData.filter(x=>x.done).length;
+  document.getElementById("pack-prog").textContent = done+" / "+packData.length;
+  document.getElementById("pack-bar").style.width = (packData.length? done/packData.length*100:0)+"%";
+}
+function rowPack(it){
+  const li = document.createElement("li"); li.className="item"+(it.done?" done":"");
+  const cb = document.createElement("input"); cb.type="checkbox"; cb.checked=it.done;
+  cb.setAttribute("aria-label", it.text);
+  cb.onchange = () => { it.done=cb.checked; store.save("packing", packData); };
+  const lb = document.createElement("label"); lb.textContent=it.text;
+  const del = document.createElement("button"); del.className="del"; del.innerHTML="&times;"; del.title="Verwijderen"; del.setAttribute("aria-label","Verwijder "+it.text);
+  del.onclick = () => { packData = packData.filter(x=>x.id!==it.id); store.save("packing", packData); };
+  li.append(cb, lb, del);
+  return li;
+}
+function addPack(){
+  const inp = document.getElementById("pack-input"); const t = inp.value.trim(); if(!t) return;
+  packData.push({id:uid(), cat:"Diversen", text:t, done:false});
+  inp.value=""; store.save("packing", packData);
+}
+
+/* ---------- te regelen ---------- */
+let todoData = null;
+function seedTodo(){ return DEFAULT_TODO.map(t=>({id:uid(), text:t, done:false})); }
+function renderTodo(){
+  const ul = document.getElementById("todo-list"); ul.innerHTML="";
+  todoData.forEach(it => ul.appendChild(rowTodo(it)));
+  const done = todoData.filter(x=>x.done).length;
+  document.getElementById("todo-prog").textContent = done+" / "+todoData.length;
+  document.getElementById("todo-bar").style.width = (todoData.length? done/todoData.length*100:0)+"%";
+}
+function rowTodo(it){
+  const li=document.createElement("li"); li.className="item"+(it.done?" done":"");
+  const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=it.done; cb.setAttribute("aria-label",it.text);
+  cb.onchange=()=>{ it.done=cb.checked; store.save("todos", todoData); };
+  const lb=document.createElement("label"); lb.textContent=it.text;
+  const del=document.createElement("button"); del.className="del"; del.innerHTML="&times;"; del.title="Verwijderen"; del.setAttribute("aria-label","Verwijder "+it.text);
+  del.onclick=()=>{ todoData=todoData.filter(x=>x.id!==it.id); store.save("todos", todoData); };
+  li.append(cb,lb,del); return li;
+}
+function addTodo(){
+  const inp=document.getElementById("todo-input"); const t=inp.value.trim(); if(!t) return;
+  todoData.push({id:uid(), text:t, done:false}); inp.value=""; store.save("todos", todoData);
+}
+
+/* ---------- kostenverdeler ---------- */
+const DEFAULT_PEOPLE = ["Jij", "Je vriendin"];
+let expenseData = [];
+let peopleData = [...DEFAULT_PEOPLE];
+
+function fmtCHF(n){ return "CHF " + n.toFixed(2).replace(/\.00$/, ""); }
+
+function renderPeopleInputs(){
+  const p0 = document.getElementById("person-0"), p1 = document.getElementById("person-1");
+  if(document.activeElement !== p0) p0.value = peopleData[0];
+  if(document.activeElement !== p1) p1.value = peopleData[1];
+  const sel = document.getElementById("exp-payer");
+  const cur = sel.value;
+  sel.innerHTML = `<option value="0">${escAttr(peopleData[0])}</option><option value="1">${escAttr(peopleData[1])}</option>`;
+  if(cur === "0" || cur === "1") sel.value = cur;
+}
+
+function renderExpenses(){
+  const ul = document.getElementById("expense-list");
+  ul.innerHTML = "";
+  if(!expenseData || expenseData.length === 0){
+    const li = document.createElement("li"); li.className = "expense-empty"; li.textContent = "Nog geen kosten toegevoegd.";
+    ul.appendChild(li);
+  }else{
+    expenseData.forEach(ex => ul.appendChild(expenseRow(ex)));
+  }
+  const totals = [0, 0];
+  (expenseData||[]).forEach(ex => { totals[ex.payer] += ex.amount; });
+  const total = totals[0] + totals[1];
+  document.getElementById("budget-total").textContent = fmtCHF(total);
+
+  const bal = document.getElementById("balance-line");
+  const diff = totals[0] - totals[1];
+  const p0 = peopleData[0] || "Persoon 1", p1 = peopleData[1] || "Persoon 2";
+  if(Math.abs(diff) < 0.01){
+    bal.textContent = total === 0 ? "" : "Jullie staan quitte — mooi gelijk verdeeld.";
+  }else if(diff > 0){
+    bal.textContent = `${p1} krijgt nog ${fmtCHF(diff/2)} van ${p0} om gelijk te trekken.`;
+  }else{
+    bal.textContent = `${p0} krijgt nog ${fmtCHF(-diff/2)} van ${p1} om gelijk te trekken.`;
+  }
+}
+
+function expenseRow(ex){
+  const li = document.createElement("li"); li.className = "expense-row";
+  const payerName = peopleData[ex.payer] || (ex.payer===0?"Persoon 1":"Persoon 2");
+  const ed = document.createElement("span"); ed.className="ed"; ed.textContent = ex.desc;
+  const ea = document.createElement("span"); ea.className="ea"; ea.textContent = fmtCHF(ex.amount);
+  const ep = document.createElement("span"); ep.className="ep"; ep.textContent = "betaald door " + payerName;
+  const del = document.createElement("button"); del.className="del"; del.innerHTML="&times;"; del.title="Verwijderen"; del.setAttribute("aria-label","Verwijder "+ex.desc);
+  del.onclick = () => { expenseData = expenseData.filter(x=>x.id!==ex.id); store.save("expenses", expenseData); };
+  li.append(ed, ea, ep, del);
+  return li;
+}
+
+function addExpense(){
+  const descInp = document.getElementById("exp-desc");
+  const amtInp = document.getElementById("exp-amount");
+  const payerSel = document.getElementById("exp-payer");
+  const desc = descInp.value.trim();
+  const amount = parseFloat(amtInp.value);
+  if(!desc || !isFinite(amount) || amount <= 0) return;
+  expenseData.push({id:uid(), desc, amount, payer: parseInt(payerSel.value,10) || 0});
+  descInp.value = ""; amtInp.value = "";
+  store.save("expenses", expenseData);
+}
+
+function wireBudget(){
+  renderPeopleInputs();
+  renderExpenses();
+  document.getElementById("exp-add").onclick = addExpense;
+  document.getElementById("exp-amount").addEventListener("keydown", e => { if(e.key==="Enter") addExpense(); });
+  document.getElementById("exp-desc").addEventListener("keydown", e => { if(e.key==="Enter") addExpense(); });
+  const p0 = document.getElementById("person-0"), p1 = document.getElementById("person-1");
+  p0.addEventListener("change", () => { peopleData[0] = p0.value.trim() || DEFAULT_PEOPLE[0]; store.save("people", peopleData); });
+  p1.addEventListener("change", () => { peopleData[1] = p1.value.trim() || DEFAULT_PEOPLE[1]; store.save("people", peopleData); });
+}
+
+/* ---------- notities ---------- */
+let noteTimer=null;
+let notesData="";
+function initNotes(){
+  const ta=document.getElementById("notes"); const hint=document.getElementById("notes-hint");
+  store.subscribe("notes", val => { notesData = (typeof val==="string"?val:""); if(document.activeElement!==ta) ta.value = notesData; });
+  ta.addEventListener("input", () => {
+    hint.textContent="Bezig met opslaan…";
+    clearTimeout(noteTimer);
+    noteTimer=setTimeout(()=>{ notesData = ta.value; store.save("notes", ta.value); hint.textContent="Opgeslagen ✓"; setTimeout(()=>hint.textContent="",1500); }, 500);
+  });
+}
+
+/* ---------- vertrekdatum + countdown ---------- */
+let tripDateData=null;
+function initDate(){
+  const show=document.getElementById("date-show");
+  const editBtn=document.getElementById("date-edit");
+  const input=document.getElementById("date-input");
+  let current=null;
+  function paint(){
+    if(current){
+      const d=new Date(current+"T00:00:00");
+      show.textContent = d.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+      const diff=Math.ceil((d - new Date().setHours(0,0,0,0))/86400000);
+      const num=document.getElementById("cd-num"), lab=document.getElementById("cd-lab");
+      if(diff>1){ num.textContent=diff; lab.textContent="dagen te gaan"; }
+      else if(diff===1){ num.textContent="1"; lab.textContent="dag te gaan!"; }
+      else if(diff===0){ num.textContent="Vandaag!"; num.style.fontSize="clamp(2rem,6vw,3.2rem)"; lab.textContent="het is zover"; }
+      else { num.textContent="Onderweg"; num.style.fontSize="clamp(2rem,6vw,3.2rem)"; lab.textContent="fijne reis ✈"; }
+    }else{
+      show.textContent="nog niet ingesteld";
+      document.getElementById("cd-num").textContent="–";
+      document.getElementById("cd-lab").textContent="stel de vertrekdatum in";
+    }
+  }
+  store.subscribe("tripDate", val => { current = (typeof val==="string" && val)? val : null; tripDateData = current; if(current) input.value=current; paint(); });
+  editBtn.onclick=()=>{ input.style.display="inline-block"; input.focus(); if(input.showPicker){try{input.showPicker()}catch(_){}} };
+  input.onchange=()=>{ current=input.value; tripDateData=current; store.save("tripDate", current); input.style.display="none"; paint(); };
+}
+
+/* ---------- back-up: export/import ---------- */
+function exportBackup(){
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    days: daysData || [],
+    packing: packData || [],
+    todos: todoData || [],
+    notes: notesData || "",
+    tripDate: tripDateData || null,
+    expenses: expenseData || [],
+    people: peopleData || DEFAULT_PEOPLE
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "zwitserland-2026-backup.json";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const hint = document.getElementById("backup-hint");
+  hint.textContent = "Back-up gedownload ✓"; setTimeout(()=>hint.textContent="", 2500);
+}
+
+function importBackup(file){
+  const hint = document.getElementById("backup-hint");
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!confirm("Dit vervangt de huidige gedeelde gegevens door de back-up. Doorgaan?")) return;
+      if(Array.isArray(parsed.days)) store.save("days", parsed.days);
+      if(Array.isArray(parsed.packing)) store.save("packing", parsed.packing);
+      if(Array.isArray(parsed.todos)) store.save("todos", parsed.todos);
+      if(typeof parsed.notes === "string") store.save("notes", parsed.notes);
+      if(parsed.tripDate) store.save("tripDate", parsed.tripDate);
+      if(Array.isArray(parsed.expenses)) store.save("expenses", parsed.expenses);
+      if(Array.isArray(parsed.people) && parsed.people.length===2) store.save("people", parsed.people);
+      hint.textContent = "Back-up hersteld ✓"; setTimeout(()=>hint.textContent="", 2500);
+    }catch(e){
+      hint.textContent = "Kon dit bestand niet lezen — is het een geldige back-up?";
+    }
+  };
+  reader.readAsText(file);
+}
+
+function wireBackup(){
+  document.getElementById("backup-export").onclick = exportBackup;
+  const fileInp = document.getElementById("backup-import-file");
+  document.getElementById("backup-import-btn").onclick = () => fileInp.click();
+  fileInp.addEventListener("change", () => { if(fileInp.files[0]) importBackup(fileInp.files[0]); fileInp.value=""; });
+}
+
+/* ---------- PWA: icoon + manifest genereren (geen losse bestanden nodig) ---------- */
+function initPWA(){
+  try{
+    const c = document.createElement("canvas"); c.width = 192; c.height = 192;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#17212B"; ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(0,0,192,192,32); else ctx.rect(0,0,192,192);
+    ctx.fill();
+    ctx.fillStyle = "#DA291C"; ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(46,46,100,100,20); else ctx.rect(46,46,100,100);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(80, 68, 32, 64);
+    ctx.fillRect(64, 84, 64, 32);
+    const iconUrl = c.toDataURL("image/png");
+    document.getElementById("pwa-icon").href = iconUrl;
+    document.getElementById("pwa-apple-icon").href = iconUrl;
+
+    const manifest = {
+      name: "Zwitserland 2026 — Onze week op reis",
+      short_name: "Zwitserland 2026",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#FBFAF7",
+      theme_color: "#17212B",
+      icons: [{src: iconUrl, sizes:"192x192", type:"image/png"}]
+    };
+    const mBlob = new Blob([JSON.stringify(manifest)], {type:"application/manifest+json"});
+    document.getElementById("pwa-manifest").href = URL.createObjectURL(mBlob);
+  }catch(e){ /* PWA-extra's zijn optioneel; negeer stil als canvas niet lukt */ }
+}
+
+function initSidenav(){
+  const links = [...document.querySelectorAll("#sidenav a")];
+  const targets = links.map(a => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+  function paint(){
+    let current = targets[0];
+    const y = window.scrollY + 120;
+    targets.forEach(t => { if(t.offsetTop <= y) current = t; });
+    links.forEach(a => a.classList.toggle("active", a.getAttribute("href") === "#"+current.id));
+  }
+  window.addEventListener("scroll", paint, {passive:true});
+  window.addEventListener("resize", paint);
+  paint();
+}
+
+/* ---------- opstarten ---------- */
+(async function(){
+  initPWA();
+  await initStore();
+  paintSync();
+  initDate();
+  initNotes();
+  initMap();
+  wireInspirationCards();
+  initSidenav();
+  initWeather();
+  wireBudget();
+  wireBackup();
+
+  let daysSeeded=false;
+  let lastLocSig="";
+  store.subscribe("days", val => {
+    const arr = asArray(val);
+    if((val==null || arr.length===0) && !daysSeeded){
+      daysSeeded=true; daysData = JSON.parse(JSON.stringify(DEFAULT_DAYS)); activeDay = daysData[0].id;
+      store.save("days", daysData);
+      return;
+    }
+    daysSeeded=true;
+    daysData = arr.map(d => ({ id:d.id||uid(), title:d.title||"", loc:d.loc||"", note:d.note||"", items:asArray(d.items) }));
+    if(!daysData.some(d=>d.id===activeDay)) activeDay = daysData.length? daysData[0].id : null;
+    renderDayBar();
+    renderDayCard();
+    updateDuration();
+    const sig = daysData.map(d=>d.loc||"").join("|");
+    if(sig !== lastLocSig){ lastLocSig = sig; renderMap(); }
+  });
+
+  let packSeeded=false;
+  store.subscribe("packing", val => {
+    const arr=asArray(val);
+    if((val==null || arr.length===0) && !packSeeded){ packSeeded=true; packData=seedPack(); store.save("packing", packData); return; }
+    packSeeded=true; packData=arr; renderPack();
+  });
+
+  let todoSeeded=false;
+  store.subscribe("todos", val => {
+    const arr=asArray(val);
+    if((val==null || arr.length===0) && !todoSeeded){ todoSeeded=true; todoData=seedTodo(); store.save("todos", todoData); return; }
+    todoSeeded=true; todoData=arr; renderTodo();
+  });
+
+  let expenseSeeded=false;
+  store.subscribe("expenses", val => {
+    const arr=asArray(val);
+    if((val==null || arr.length===0) && !expenseSeeded){ expenseSeeded=true; expenseData=[]; store.save("expenses", expenseData); return; }
+    expenseSeeded=true; expenseData=arr; renderExpenses();
+  });
+
+  let peopleSeeded=false;
+  store.subscribe("people", val => {
+    const arr=asArray(val);
+    if((val==null || arr.length!==2) && !peopleSeeded){ peopleSeeded=true; peopleData=[...DEFAULT_PEOPLE]; store.save("people", peopleData); return; }
+    peopleSeeded=true; peopleData=arr; renderPeopleInputs(); renderExpenses();
+  });
+
+  document.getElementById("pack-add").onclick=addPack;
+  document.getElementById("pack-input").addEventListener("keydown", e=>{ if(e.key==="Enter") addPack(); });
+  document.getElementById("todo-add").onclick=addTodo;
+  document.getElementById("todo-input").addEventListener("keydown", e=>{ if(e.key==="Enter") addTodo(); });
+})();
+</script>
+</body>
+</html>
